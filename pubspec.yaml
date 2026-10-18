@@ -1,0 +1,23 @@
+name: twopiwallet_key_derivation
+description: >
+  Standalone, auditable key-derivation code for 2π Wallet — the exact
+  mnemonic-to-address logic used by the app's "hot" wallet and offline
+  Cold Wallet Creator, extracted with no app wiring, no secrets, and no
+  network calls.
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  bip39: ^1.0.6
+  bip32: ^2.0.0
+  web3dart: ^2.3.5
+  bitcoin_base: ^7.3.0
+  pointycastle: ^3.9.1
+  crypto: ^3.0.3
+
+dev_dependencies:
+  test: ^1.25.0
+  lints: ^4.0.0
