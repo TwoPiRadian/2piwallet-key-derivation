@@ -10,26 +10,53 @@ import 'package:twopiwallet_key_derivation/twopiwallet_key_derivation.dart';
 const testMnemonic =
     'abandon abandon abandon abandon abandon abandon abandon abandon '
     'abandon abandon abandon about';
+final testMnemonicWords = testMnemonic.split(' ');
+
+// Known-correct outputs for [testMnemonic], from authoritative specs —
+// not derived from this repo's own code, so they can actually catch a
+// regression instead of just checking the code agrees with itself.
+//
+//  - EVM: widely published reference value for m/44'/60'/0'/0/0
+//    (e.g. MetaMask/ethers.js docs).
+//  - BTC: the official BIP-84 spec test vector for m/84'/0'/0'/0/0
+//    (https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki).
+const expectedEvmAddress = '0x9858EfFD232B4033E47d90003D41EC34EcaEda94';
+const expectedBtcAddress = 'bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu';
 
 void main() {
   group('EVM derivation', () {
     test('matches the well-known test-vector address', () async {
-      // This address for the "abandon...about" mnemonic at m/44'/60'/0'/0/0
-      // is a widely published reference value (e.g. MetaMask/ethers.js docs).
       final address = await deriveEvmAddressFromMnemonic(testMnemonic);
-      expect(address, '0x9858EfFD232B4033E47d90003D41EC34EcaEda94');
+      expect(address, expectedEvmAddress);
     });
   });
 
   group('BTC derivation', () {
-    test('produces a valid bc1q native SegWit address', () {
+    test('matches the official BIP-84 spec test-vector address', () {
       final (address, wif) = deriveBtcFromMnemonic(testMnemonic);
-      expect(address, startsWith('bc1q'));
+      expect(address, expectedBtcAddress);
       expect(wif, isNotEmpty);
     });
   });
 
-  group('Cold Wallet Creator', () {
+  group('Cold Wallet Creator derivation, cross-checked against the hot wallet', () {
+    // ColdWalletDerivation is a completely separate, from-scratch
+    // implementation (raw secp256k1 point math, Keccak-256, RIPEMD-160,
+    // Bech32 — no bip32/bip39/bitcoin_base/web3dart packages). Feeding it
+    // the SAME test mnemonic as above and checking it lands on the SAME
+    // known-correct addresses proves two independently-written code paths
+    // agree with each other and with the public spec — not just that one
+    // implementation agrees with itself. If a future refactor broke either
+    // file's math, this would very likely catch it, where a format-only
+    // check (e.g. "address starts with bc1q") would not.
+    test('matches the same test-vector addresses as the hot wallet', () {
+      final result = ColdWalletDerivation.fromMnemonic(testMnemonicWords);
+      expect(result.evmAddress, expectedEvmAddress);
+      expect(result.btcAddress, expectedBtcAddress);
+    });
+  });
+
+  group('Cold Wallet Creator generation', () {
     late List<String> wordList;
 
     setUpAll(() async {

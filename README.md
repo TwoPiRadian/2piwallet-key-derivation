@@ -83,9 +83,24 @@ wallet meant to be generated once, offline, and stored long-term.
 
 ```bash
 dart pub get
-dart test            # runs a known BIP-39 test vector + round-trip checks
+dart test            # checks against known, independently-published test vectors
 dart run example/main.dart
 ```
+
+The test suite checks both derivation paths against real, external
+reference values — not just internal round-trips:
+- EVM address for the standard "abandon...about" BIP-39 test mnemonic,
+  matched against a widely published reference value.
+- BTC address for the same mnemonic, matched against the **official
+  BIP-84 spec test vector**
+  ([bitcoin/bips](https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki)).
+- The Cold Wallet Creator's from-scratch implementation (no bip32/bip39/
+  bitcoin_base/web3dart packages — raw secp256k1/Keccak/RIPEMD-160/Bech32)
+  fed the *same* test mnemonic, checked against those *same* known
+  addresses. Two independently-written implementations landing on the
+  same externally-verified values is a stronger correctness signal than
+  either one agreeing with itself — and would catch a regression if a
+  future refactor broke either file's math.
 
 `example/main.dart` generates a fresh hot-wallet mnemonic and a fresh
 cold-wallet mnemonic, derives EVM + BTC addresses for both, and confirms
